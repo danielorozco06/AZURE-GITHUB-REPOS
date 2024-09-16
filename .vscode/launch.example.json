@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Program",
+      "console": "integratedTerminal",
+      "preLaunchTask": "npx: tsc -b",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "program": "${workspaceFolder}/dist/index.js",
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+      "env": {
+        "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/ORG_NAME",
+        "AZURE_DEVOPS_PAT": "PERSONAL_ACCESS_TOKEN",
+        "GITHUB_ORG": "ORG_NAME",
+        "GITHUB_TOKEN": "PERSONAL_ACCESS_TOKEN"
+      }
+    }
+  ]
+}

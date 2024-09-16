@@ -1,0 +1,12 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "npx: tsc -b",
+      "type": "shell",
+      "command": "npx tsc -b",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}
