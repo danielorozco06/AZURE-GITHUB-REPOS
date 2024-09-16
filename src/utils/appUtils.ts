@@ -6,17 +6,26 @@ import { GitHubRepository } from '../infrastructure/repositories/GitHubRepositor
 
 /**
  * Loads configuration from environment variables.
- * @returns {Object} Configuration object containing Azure and GitHub credentials.
+ * @returns {Object} An object containing the configuration values.
+ * @property {string} azureOrgUrl - The URL of the Azure DevOps organization.
+ * @property {string} azureToken - The Personal Access Token for Azure DevOps.
+ * @property {string} gitHubToken - The access token for GitHub.
+ * @property {string} gitHubOrg - The name of the GitHub organization.
  * @throws {Error} If any required environment variable is missing.
  */
-export function loadConfig() {
+export function loadConfig(): {
+  azureOrgUrl: string;
+  azureToken: string;
+  gitHubToken: string;
+  gitHubOrg: string;
+} {
   const azureOrgUrl = process.env.AZURE_DEVOPS_ORG_URL;
   const azureToken = process.env.AZURE_DEVOPS_PAT;
   const gitHubOrg = process.env.GITHUB_ORG;
   const gitHubToken = process.env.GITHUB_TOKEN;
 
   if (!azureOrgUrl || !azureToken || !gitHubToken || !gitHubOrg) {
-    throw new Error('Set ORG_URL, PAT, GITHUB_TOKEN y GITHUB_ORG like environment variables');
+    throw new Error('Set AZURE_DEVOPS_ORG_URL, AZURE_DEVOPS_PAT, GITHUB_TOKEN, and GITHUB_ORG as environment variables');
   }
 
   return { azureOrgUrl, azureToken, gitHubToken, gitHubOrg };
