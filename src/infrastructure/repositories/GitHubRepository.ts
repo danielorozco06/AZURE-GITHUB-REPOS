@@ -1,6 +1,8 @@
 import { Repository } from '../../domain/models/Repository';
 import { RepositoryService } from '../../domain/services/RepositoryService';
 import { Octokit } from 'octokit';
+import { GitHubRepositoryMapper } from '../../application/mappers/GitHubRepositoryMapper';
+import { getOwnerAndRepoName } from '../../application/utils/GitHubUtils';
 
 /**
  * GitHubRepository class implements the RepositoryService interface for GitHub.
@@ -23,6 +25,7 @@ export class GitHubRepository implements RepositoryService {
   /**
    * Retrieves a list of all repositories in the GitHub organization.
    * @returns {Promise<Repository[]>} A promise that resolves to an array of Repository objects.
+   * @throws {Error} If the organization is not found.
    */
   async listRepositories(): Promise<Repository[]> {
     try {
@@ -35,15 +38,9 @@ export class GitHubRepository implements RepositoryService {
         }
       });
 
-      return response.map((repo: any) => ({
-        id: repo.id.toString(),
-        name: repo.name,
-        url: repo.html_url,
-        provider: 'GitHub'
-      }));
+      return response.map(GitHubRepositoryMapper.toRepository);
     } catch (error) {
-      console.error('Error al listar repositorios de GitHub:', error);
-      return [];
+      throw new Error('Failed to list GitHub repositories: ' + error);
     }
   }
 
@@ -54,25 +51,20 @@ export class GitHubRepository implements RepositoryService {
    * @throws {Error} If the repository is not found.
    */
   async getRepositoryDetails(repositoryId: string): Promise<Repository> {
-    const repos = await this.listRepositories();
-    const repo = repos.find(r => r.id === repositoryId);
-    if (!repo) {
-      throw new Error('Repositorio no encontrado');
+    try {
+      const repos = await this.listRepositories();
+      const [owner, repoName] = await getOwnerAndRepoName(repos, repositoryId);
+      const response = await this.octokit.request('GET /repos/{owner}/{repo}', {
+        owner,
+        repo: repoName,
+        headers: {
+          'X-GitHub-Api-Version': '2022-11-28'
+        }
+      });
+
+      return GitHubRepositoryMapper.toRepository(response.data);
+    } catch (error) {
+      throw new Error(`Failed to get GitHub repository details for ID ${repositoryId}: ${error}`);
     }
-
-    const [owner, repoName] = repo.url.split('/').slice(-2);
-    const response = await this.octokit.request('GET /repos/{owner}/{repo}', {
-      owner,
-      repo: repoName,
-      headers: {
-        'X-GitHub-Api-Version': '2022-11-28'
-      }
-    });
-
-    return {
-      ...repo,
-      defaultBranch: response.data.default_branch,
-      size: response.data.size
-    };
   }
 }
