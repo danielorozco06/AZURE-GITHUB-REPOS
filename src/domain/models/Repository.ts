@@ -8,12 +8,12 @@ export interface Repository {
   name: string;
   /** URL of the repository */
   url: string;
+  /** The service provider of the repository */
+  provider: 'Azure' | 'GitHub';
   /** Name of the project (for Azure DevOps repositories) */
   project?: string;
   /** Name of the default branch */
   defaultBranch?: string;
   /** Size of the repository in KB */
   size?: number;
-  /** The service provider of the repository */
-  provider: 'Azure' | 'GitHub';
 }

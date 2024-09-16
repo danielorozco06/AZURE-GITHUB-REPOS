@@ -18,7 +18,8 @@
         "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/ORG_NAME",
         "AZURE_DEVOPS_PAT": "PERSONAL_ACCESS_TOKEN",
         "GITHUB_ORG": "ORG_NAME",
-        "GITHUB_TOKEN": "PERSONAL_ACCESS_TOKEN"
+        "GITHUB_TOKEN": "PERSONAL_ACCESS_TOKEN",
+        "REPO_PROVIDER": "Azure" // "Azure" or "GitHub"
       }
     }
   ]

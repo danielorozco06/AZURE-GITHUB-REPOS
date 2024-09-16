@@ -1,57 +1,53 @@
-import { ListGitHubRepositoriesUseCase } from '../application/use-cases/ListGitHubRepositoriesUseCase';
-import { ListAzureRepositoriesUseCase } from '../application/use-cases/ListAzureRepositoriesUseCase';
 import { Repository } from '../domain/models/Repository';
-import { AzureRepository } from '../infrastructure/repositories/AzureRepository';
-import { GitHubRepository } from '../infrastructure/repositories/GitHubRepository';
+import { RepositoryServiceFactory } from '../infrastructure/factories/RepositoryServiceFactory';
+import { ListRepositoriesUseCase } from '../application/use-cases/ListRepositoriesUseCase';
 
 /**
- * Loads configuration from environment variables.
+ * Loads configuration from environment variables based on the repository provider.
  * @returns {Object} An object containing the configuration values.
- * @property {string} azureOrgUrl - The URL of the Azure DevOps organization.
- * @property {string} azureToken - The Personal Access Token for Azure DevOps.
- * @property {string} gitHubToken - The access token for GitHub.
- * @property {string} gitHubOrg - The name of the GitHub organization.
+ * @property {string} repoProvider - The repository provider ('Azure' or 'GitHub').
+ * @property {string} org - The organization URL (Azure) or name (GitHub).
+ * @property {string} token - The access token for the selected provider.
  * @throws {Error} If any required environment variable is missing.
  */
 export function loadConfig(): {
-  azureOrgUrl: string;
-  azureToken: string;
-  gitHubToken: string;
-  gitHubOrg: string;
+  repoProvider: string;
+  org: string;
+  token: string;
 } {
-  const azureOrgUrl = process.env.AZURE_DEVOPS_ORG_URL;
-  const azureToken = process.env.AZURE_DEVOPS_PAT;
-  const gitHubOrg = process.env.GITHUB_ORG;
-  const gitHubToken = process.env.GITHUB_TOKEN;
+  const repoProvider = process.env.REPO_PROVIDER?.toLowerCase();
+  let org, token;
 
-  if (!azureOrgUrl || !azureToken || !gitHubToken || !gitHubOrg) {
-    throw new Error('Set AZURE_DEVOPS_ORG_URL, AZURE_DEVOPS_PAT, GITHUB_TOKEN, and GITHUB_ORG as environment variables');
+  switch (repoProvider) {
+    case 'azure':
+      org = process.env.AZURE_DEVOPS_ORG_URL;
+      token = process.env.AZURE_DEVOPS_PAT;
+      break;
+    case 'github':
+      org = process.env.GITHUB_ORG;
+      token = process.env.GITHUB_TOKEN;
+      break;
+    default:
+      throw new Error(`Unsupported repository provider: ${repoProvider}`);
   }
 
-  return { azureOrgUrl, azureToken, gitHubToken, gitHubOrg };
+  if (!repoProvider || !org || !token) {
+    throw new Error(`Missing environment variables for ${repoProvider}`);
+  }
+
+  return { repoProvider, org, token };
 }
 
 /**
  * Initializes repository use cases with the provided configuration.
- * @param config Configuration object containing Azure and GitHub credentials.
- * @returns Object containing initialized use cases for Azure and GitHub repositories.
+ * @param repoProvider The repository provider ('Azure' or 'GitHub').
+ * @param org The organization URL (Azure) or name (GitHub).
+ * @param token The access token for the selected provider.
+ * @returns An instance of ListRepositoriesUseCase.
  */
-export function initializeRepositories(config: {
-  azureOrgUrl: string;
-  azureToken: string;
-  gitHubToken: string;
-  gitHubOrg: string;
-}): {
-  listAzureRepositoriesUseCase: ListAzureRepositoriesUseCase;
-  listGitHubRepositoriesUseCase: ListGitHubRepositoriesUseCase;
-} {
-  const azureRepository = new AzureRepository(config.azureOrgUrl, config.azureToken);
-  const listAzureRepositoriesUseCase = new ListAzureRepositoriesUseCase(azureRepository);
-
-  const gitHubRepository = new GitHubRepository(config.gitHubToken, config.gitHubOrg);
-  const listGitHubRepositoriesUseCase = new ListGitHubRepositoriesUseCase(gitHubRepository);
-
-  return { listAzureRepositoriesUseCase, listGitHubRepositoriesUseCase };
+export function initializeRepositories(repoProvider: string, org: string, token: string): ListRepositoriesUseCase {
+  const repositoryService = RepositoryServiceFactory.create(repoProvider, org, token);
+  return new ListRepositoriesUseCase(repositoryService);
 }
 
 /**
@@ -65,15 +61,18 @@ export function formatRepositoryOutput(repositories: Repository[], provider: str
     console.log(`\n- Nombre: ${repo.name}`);
     console.log(`  ID: ${repo.id}`);
     console.log(`  URL: ${repo.url}`);
-    if (provider === 'Azure') {
-      console.log(`  Proyecto: ${repo.project}`);
-      console.log(`  Rama Predeterminada: ${repo.defaultBranch}`);
-      console.log(`  Tamaño: ${repo.size} KB`);
-    } else if (provider === 'GitHub') {
-      console.log(`  Rama Predeterminada: ${repo.defaultBranch}`);
-      console.log(`  Tamaño: ${repo.size} KB`);
-    } else {
-      console.log('Proveedor no reconocido');
+    switch (provider.toLowerCase()) {
+      case 'azure':
+        console.log(`  Proyecto: ${repo.project}`);
+        console.log(`  Rama Predeterminada: ${repo.defaultBranch}`);
+        console.log(`  Tamaño: ${repo.size} KB`);
+        break;
+      case 'github':
+        console.log(`  Rama Predeterminada: ${repo.defaultBranch}`);
+        console.log(`  Tamaño: ${repo.size} KB`);
+        break;
+      default:
+        console.log('Proveedor no reconocido');
     }
   });
 }

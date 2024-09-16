@@ -2,7 +2,7 @@ import { Repository } from '../../domain/models/Repository';
 import { RepositoryService } from '../../domain/services/RepositoryService';
 import { WebApi, getPersonalAccessTokenHandler } from 'azure-devops-node-api';
 import { GitRepository } from 'azure-devops-node-api/interfaces/GitInterfaces';
-import { AzureRepositoryMapper } from '../../application/mappers/AzureRepositoryMapper';
+import { RepositoryMapper } from '../mappers/RepositoryMapper';
 
 /**
  * AzureRepository class implements the RepositoryService interface for Azure DevOps.
@@ -16,10 +16,7 @@ export class AzureRepository implements RepositoryService {
    * @param {string} orgUrl - The URL of the Azure DevOps organization.
    * @param {string} token - The personal access token for authentication.
    */
-  constructor(
-    private readonly orgUrl: string,
-    private readonly token: string
-  ) {
+  constructor(private readonly orgUrl: string, private readonly token: string) {
     const authHandler = getPersonalAccessTokenHandler(this.token);
     this.connection = new WebApi(this.orgUrl, authHandler);
   }
@@ -32,7 +29,7 @@ export class AzureRepository implements RepositoryService {
     try {
       const gitApi = await this.connection.getGitApi();
       const repositories: GitRepository[] = await gitApi.getRepositories();
-      return repositories.map(AzureRepositoryMapper.toRepository);
+      return repositories.map(RepositoryMapper.fromAzure);
     } catch (error) {
       throw new Error('Failed to list Azure repositories: ' + error);
     }
@@ -47,7 +44,7 @@ export class AzureRepository implements RepositoryService {
     try {
       const gitApi = await this.connection.getGitApi();
       const repo = await gitApi.getRepository(repositoryId);
-      return AzureRepositoryMapper.toRepository(repo);
+      return RepositoryMapper.fromAzure(repo);
     } catch (error) {
       throw new Error(`Failed to get Azure repository details for ID ${repositoryId}: ` + error);
     }

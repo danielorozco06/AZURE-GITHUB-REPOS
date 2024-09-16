@@ -1,23 +1,23 @@
 import { Repository } from '../../domain/models/Repository';
 import { RepositoryService } from '../../domain/services/RepositoryService';
 import { Octokit } from 'octokit';
-import { GitHubRepositoryMapper } from '../../application/mappers/GitHubRepositoryMapper';
-import { getOwnerAndRepoName } from '../../application/utils/GitHubUtils';
+import { getOwnerAndRepoName } from '../utils/GitHubUtils';
+import { RepositoryMapper } from '../mappers/RepositoryMapper';
 
 /**
  * GitHubRepository class implements the RepositoryService interface for GitHub.
  * It provides methods to interact with GitHub repositories.
  */
 export class GitHubRepository implements RepositoryService {
-  private readonly octokit: Octokit;
   private readonly organization: string;
+  private readonly octokit: Octokit;
 
   /**
    * Creates an instance of GitHubRepository.
-   * @param {string} token - The GitHub personal access token for authentication.
    * @param {string} organization - The GitHub organization name.
+   * @param {string} token - The GitHub personal access token for authentication.
    */
-  constructor(token: string, organization: string) {
+  constructor(organization: string, token: string) {
     this.octokit = new Octokit({ auth: token });
     this.organization = organization;
   }
@@ -38,7 +38,7 @@ export class GitHubRepository implements RepositoryService {
         }
       });
 
-      return response.map(GitHubRepositoryMapper.toRepository);
+      return response.map(RepositoryMapper.fromGitHub);
     } catch (error) {
       throw new Error('Failed to list GitHub repositories: ' + error);
     }
@@ -62,7 +62,7 @@ export class GitHubRepository implements RepositoryService {
         }
       });
 
-      return GitHubRepositoryMapper.toRepository(response.data);
+      return RepositoryMapper.fromGitHub(response.data);
     } catch (error) {
       throw new Error(`Failed to get GitHub repository details for ID ${repositoryId}: ${error}`);
     }

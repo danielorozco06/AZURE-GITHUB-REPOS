@@ -3,13 +3,10 @@ import { loadConfig, initializeRepositories, formatRepositoryOutput } from './ut
 async function main() {
   try {
     const config = loadConfig();
-    const { listAzureRepositoriesUseCase, listGitHubRepositoriesUseCase } = initializeRepositories(config);
+    const listRepositoriesUseCase = initializeRepositories(config.repoProvider, config.org, config.token);
 
-    const azureRepositories = await listAzureRepositoriesUseCase.execute();
-    formatRepositoryOutput(azureRepositories, 'Azure');
-
-    const gitHubRepositories = await listGitHubRepositoriesUseCase.execute();
-    formatRepositoryOutput(gitHubRepositories, 'GitHub');
+    const repositories = await listRepositoriesUseCase.execute();
+    formatRepositoryOutput(repositories, config.repoProvider);
   } catch (error) {
     console.error('Error al listar repositorios:', error);
   }
