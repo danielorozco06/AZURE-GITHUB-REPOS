@@ -4,6 +4,11 @@ import { Repository } from '../domain/models/Repository';
 import { AzureRepository } from '../infrastructure/repositories/AzureRepository';
 import { GitHubRepository } from '../infrastructure/repositories/GitHubRepository';
 
+/**
+ * Loads configuration from environment variables.
+ * @returns {Object} Configuration object containing Azure and GitHub credentials.
+ * @throws {Error} If any required environment variable is missing.
+ */
 export function loadConfig() {
   const azureOrgUrl = process.env.AZURE_DEVOPS_ORG_URL;
   const azureToken = process.env.AZURE_DEVOPS_PAT;
@@ -17,12 +22,20 @@ export function loadConfig() {
   return { azureOrgUrl, azureToken, gitHubToken, gitHubOrg };
 }
 
+/**
+ * Initializes repository use cases with the provided configuration.
+ * @param config Configuration object containing Azure and GitHub credentials.
+ * @returns Object containing initialized use cases for Azure and GitHub repositories.
+ */
 export function initializeRepositories(config: {
   azureOrgUrl: string;
   azureToken: string;
   gitHubToken: string;
   gitHubOrg: string;
-}) {
+}): {
+  listAzureRepositoriesUseCase: ListAzureRepositoriesUseCase;
+  listGitHubRepositoriesUseCase: ListGitHubRepositoriesUseCase;
+} {
   const azureRepository = new AzureRepository(config.azureOrgUrl, config.azureToken);
   const listAzureRepositoriesUseCase = new ListAzureRepositoriesUseCase(azureRepository);
 
@@ -32,6 +45,11 @@ export function initializeRepositories(config: {
   return { listAzureRepositoriesUseCase, listGitHubRepositoriesUseCase };
 }
 
+/**
+ * Formats and prints repository information to the console.
+ * @param {Repository[]} repositories - Array of Repository objects to be formatted and printed.
+ * @param {string} provider - The name of the repository provider (e.g., 'Azure' or 'GitHub').
+ */
 export function formatRepositoryOutput(repositories: Repository[], provider: string) {
   console.log(`\n--- Lista Detallada de Repositorios de ${provider} ---`);
   repositories.forEach(repo => {
